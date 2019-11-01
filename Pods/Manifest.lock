@@ -1,0 +1,16 @@
+PODS:
+  - CocoaAsyncSocket (7.6.3)
+
+DEPENDENCIES:
+  - CocoaAsyncSocket
+
+SPEC REPOS:
+  trunk:
+    - CocoaAsyncSocket
+
+SPEC CHECKSUMS:
+  CocoaAsyncSocket: eafaa68a7e0ec99ead0a7b35015e0bf25d2c8987
+
+PODFILE CHECKSUM: 0534ce106590298fdb958eaec0f2b652577d89f0
+
+COCOAPODS: 1.8.1
