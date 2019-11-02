@@ -18,7 +18,6 @@
 		B8190C81236CE544004B49D2 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = B8190C7F236CE544004B49D2 /* LaunchScreen.storyboard */; };
 		B8190C8C236CE544004B49D2 /* LocalNetworkingAppTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B8190C8B236CE544004B49D2 /* LocalNetworkingAppTests.swift */; };
 		B8190C97236CE544004B49D2 /* LocalNetworkingAppUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B8190C96236CE544004B49D2 /* LocalNetworkingAppUITests.swift */; };
-		B8190CA5236CEE87004B49D2 /* ClientViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = B8190CA4236CEE87004B49D2 /* ClientViewController.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -59,7 +58,6 @@
 		B8190C92236CE544004B49D2 /* LocalNetworkingAppUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = LocalNetworkingAppUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		B8190C96236CE544004B49D2 /* LocalNetworkingAppUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalNetworkingAppUITests.swift; sourceTree = "<group>"; };
 		B8190C98236CE544004B49D2 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
-		B8190CA4236CEE87004B49D2 /* ClientViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClientViewController.swift; sourceTree = "<group>"; };
 		C4BEF5D4D9BDC2BE47A4ACC4 /* Pods_LocalNetworkingAppTests.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_LocalNetworkingAppTests.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		CFC95BF9C8CE6CCA58287EDC /* Pods-LocalNetworkingAppTests.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-LocalNetworkingAppTests.debug.xcconfig"; path = "Target Support Files/Pods-LocalNetworkingAppTests/Pods-LocalNetworkingAppTests.debug.xcconfig"; sourceTree = "<group>"; };
 		DA658D06456FC2724631238D /* Pods-LocalNetworkingApp.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-LocalNetworkingApp.debug.xcconfig"; path = "Target Support Files/Pods-LocalNetworkingApp/Pods-LocalNetworkingApp.debug.xcconfig"; sourceTree = "<group>"; };
@@ -121,7 +119,6 @@
 				B8190C74236CE541004B49D2 /* AppDelegate.swift */,
 				B8190C76236CE541004B49D2 /* SceneDelegate.swift */,
 				B8190C78236CE541004B49D2 /* HostViewController.swift */,
-				B8190CA4236CEE87004B49D2 /* ClientViewController.swift */,
 				B8190C7A236CE541004B49D2 /* Main.storyboard */,
 				B8190C7D236CE544004B49D2 /* Assets.xcassets */,
 				B8190C7F236CE544004B49D2 /* LaunchScreen.storyboard */,
@@ -413,7 +410,6 @@
 				B8190C79236CE541004B49D2 /* HostViewController.swift in Sources */,
 				B8190C75236CE541004B49D2 /* AppDelegate.swift in Sources */,
 				B8190C77236CE541004B49D2 /* SceneDelegate.swift in Sources */,
-				B8190CA5236CEE87004B49D2 /* ClientViewController.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
