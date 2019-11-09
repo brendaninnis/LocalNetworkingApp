@@ -37,17 +37,19 @@ class HostViewController: UIViewController {
         "Barak"
     ]
     var myName = ""
+    var socketNames: [GCDAsyncSocket: String] = [:]
     
     var netService: NetService?
     var socket: GCDAsyncSocket?
     let socketQueue = DispatchQueue.init(label: "HostSocketQueue")
     var connectedSockets: [GCDAsyncSocket] = []
-    var socketNames: [GCDAsyncSocket: String] = [:]
+    var netServiceBrowser: NetServiceBrowser?
+    var serverAddresses: [Data]?
+    
     var host = false
     var connected = false
     var joined = false
-    var netServiceBrowser: NetServiceBrowser?
-    var serverAddresses: [Data]?
+    
     var cannonicalThread: [Message] = []
     
     override func viewDidLoad() {
