@@ -2,6 +2,7 @@
 <document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="15400" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" useSafeAreas="YES" colorMatched="YES" initialViewController="298-se-A9Y">
     <device id="retina6_1" orientation="portrait" appearance="light"/>
     <dependencies>
+        <deployment identifier="iOS"/>
         <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="15404"/>
         <capability name="Safe area layout guides" minToolsVersion="9.0"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
@@ -31,59 +32,50 @@
                         <rect key="frame" x="0.0" y="0.0" width="414" height="896"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
-                            <textView clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" editable="NO" usesAttributedText="YES" selectable="NO" translatesAutoresizingMaskIntoConstraints="NO" id="ghG-2B-Nrc">
-                                <rect key="frame" x="0.0" y="88" width="414" height="708"/>
+                            <textView clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" editable="NO" selectable="NO" translatesAutoresizingMaskIntoConstraints="NO" id="ghG-2B-Nrc">
+                                <rect key="frame" x="16" y="88" width="382" height="708"/>
                                 <color key="backgroundColor" systemColor="systemBackgroundColor" cocoaTouchSystemColor="whiteColor"/>
-                                <attributedString key="attributedText">
-                                    <fragment content="Polgara">
-                                        <attributes>
-                                            <font key="NSFont" size="13" name=".SFNSText"/>
-                                            <paragraphStyle key="NSParagraphStyle" alignment="natural" lineBreakMode="wordWrapping" baseWritingDirection="natural" tighteningFactorForTruncation="0.0"/>
-                                        </attributes>
-                                    </fragment>
-                                    <fragment>
-                                        <string key="content" base64-UTF8="YES">
-Cg
-</string>
-                                        <attributes>
-                                            <font key="NSFont" size="15" name=".AppleSystemUIFont"/>
-                                            <paragraphStyle key="NSParagraphStyle" alignment="natural" lineBreakMode="wordWrapping" baseWritingDirection="natural" tighteningFactorForTruncation="0.0"/>
-                                        </attributes>
-                                    </fragment>
-                                    <fragment content="Hello, World!">
-                                        <attributes>
-                                            <font key="NSFont" size="24" name=".SFNSDisplay"/>
-                                            <paragraphStyle key="NSParagraphStyle" alignment="natural" lineBreakMode="wordWrapping" baseWritingDirection="natural" tighteningFactorForTruncation="0.0"/>
-                                        </attributes>
-                                    </fragment>
-                                </attributedString>
+                                <color key="textColor" systemColor="labelColor" cocoaTouchSystemColor="darkTextColor"/>
+                                <fontDescription key="fontDescription" name=".AppleSystemUIFont" family=".AppleSystemUIFont" pointSize="11"/>
                                 <textInputTraits key="textInputTraits" autocapitalizationType="sentences"/>
                             </textView>
-                            <textField opaque="NO" contentMode="scaleToFill" horizontalHuggingPriority="249" contentHorizontalAlignment="left" contentVerticalAlignment="center" borderStyle="roundedRect" placeholder="Say something..." textAlignment="natural" minimumFontSize="17" translatesAutoresizingMaskIntoConstraints="NO" id="MKp-BZ-nNk">
+                            <textField opaque="NO" contentMode="scaleToFill" horizontalHuggingPriority="249" enabled="NO" contentHorizontalAlignment="left" contentVerticalAlignment="center" borderStyle="roundedRect" placeholder="Say something..." textAlignment="natural" minimumFontSize="17" translatesAutoresizingMaskIntoConstraints="NO" id="MKp-BZ-nNk">
                                 <rect key="frame" x="16" y="812" width="330" height="34"/>
                                 <fontDescription key="fontDescription" type="system" pointSize="14"/>
-                                <textInputTraits key="textInputTraits"/>
+                                <textInputTraits key="textInputTraits" returnKeyType="send"/>
+                                <connections>
+                                    <outlet property="delegate" destination="BYZ-38-t0r" id="n6H-d8-PhL"/>
+                                </connections>
                             </textField>
-                            <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="TdV-tt-Hw9">
+                            <button opaque="NO" contentMode="scaleToFill" enabled="NO" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="TdV-tt-Hw9">
                                 <rect key="frame" x="362" y="814" width="36" height="30"/>
                                 <state key="normal" title="Send"/>
+                                <connections>
+                                    <action selector="sendButtonTapped:" destination="BYZ-38-t0r" eventType="touchUpInside" id="9rN-kH-iUj"/>
+                                </connections>
                             </button>
                         </subviews>
                         <color key="backgroundColor" systemColor="systemBackgroundColor" cocoaTouchSystemColor="whiteColor"/>
                         <constraints>
                             <constraint firstItem="ghG-2B-Nrc" firstAttribute="top" secondItem="6Tk-OE-BBY" secondAttribute="top" id="2S4-Tz-cca"/>
-                            <constraint firstItem="ghG-2B-Nrc" firstAttribute="leading" secondItem="6Tk-OE-BBY" secondAttribute="leading" id="4cl-Qc-x3P"/>
+                            <constraint firstItem="ghG-2B-Nrc" firstAttribute="leading" secondItem="6Tk-OE-BBY" secondAttribute="leading" constant="16" id="4cl-Qc-x3P"/>
                             <constraint firstItem="TdV-tt-Hw9" firstAttribute="centerY" secondItem="MKp-BZ-nNk" secondAttribute="centerY" id="J8J-3d-FT1"/>
                             <constraint firstItem="TdV-tt-Hw9" firstAttribute="leading" secondItem="MKp-BZ-nNk" secondAttribute="trailing" constant="16" id="NJl-gs-xYQ"/>
                             <constraint firstItem="6Tk-OE-BBY" firstAttribute="trailing" secondItem="TdV-tt-Hw9" secondAttribute="trailing" constant="16" id="RJB-TZ-xac"/>
                             <constraint firstItem="MKp-BZ-nNk" firstAttribute="top" secondItem="ghG-2B-Nrc" secondAttribute="bottom" constant="16" id="egS-d9-u6g"/>
                             <constraint firstItem="MKp-BZ-nNk" firstAttribute="leading" secondItem="6Tk-OE-BBY" secondAttribute="leading" constant="16" id="jnW-Ru-Fhv"/>
-                            <constraint firstItem="6Tk-OE-BBY" firstAttribute="trailing" secondItem="ghG-2B-Nrc" secondAttribute="trailing" id="ooG-yT-H54"/>
+                            <constraint firstItem="6Tk-OE-BBY" firstAttribute="trailing" secondItem="ghG-2B-Nrc" secondAttribute="trailing" constant="16" id="ooG-yT-H54"/>
                             <constraint firstItem="6Tk-OE-BBY" firstAttribute="bottom" secondItem="MKp-BZ-nNk" secondAttribute="bottom" constant="16" id="w3F-2e-KzP"/>
                         </constraints>
                         <viewLayoutGuide key="safeArea" id="6Tk-OE-BBY"/>
                     </view>
-                    <navigationItem key="navigationItem" title="Local Chat" id="2dE-JU-t4B"/>
+                    <navigationItem key="navigationItem" title="Belgariad Chat" id="2dE-JU-t4B"/>
+                    <connections>
+                        <outlet property="sendButton" destination="TdV-tt-Hw9" id="lmX-oY-fPi"/>
+                        <outlet property="textField" destination="MKp-BZ-nNk" id="Pad-4I-rBw"/>
+                        <outlet property="textFieldBottom" destination="w3F-2e-KzP" id="3Qf-mH-ycd"/>
+                        <outlet property="textView" destination="ghG-2B-Nrc" id="2LB-wG-7bv"/>
+                    </connections>
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="dkx-z0-nzr" sceneMemberID="firstResponder"/>
             </objects>
