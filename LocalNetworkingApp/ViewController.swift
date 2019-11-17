@@ -9,7 +9,7 @@
 import UIKit
 import CocoaAsyncSocket
 
-class HostViewController: UIViewController {
+class ViewController: UIViewController {
 
     static let MESSAGE_TAG = 1
     static let NAME_TAG = 2
@@ -60,7 +60,7 @@ class HostViewController: UIViewController {
         NotificationCenter.default.addObserver(self,selector: #selector(self.keyboardWillHide), name:UIResponder.keyboardDidHideNotification, object: nil)
         
         // Add join button
-        self.navigationItem.rightBarButtonItem = UIBarButtonItem(title: "Join", style: .plain, target: self, action: #selector(HostViewController.join))
+        self.navigationItem.rightBarButtonItem = UIBarButtonItem(title: "Join", style: .plain, target: self, action: #selector(ViewController.join))
     }
     
     func getName() -> String {
@@ -78,7 +78,7 @@ class HostViewController: UIViewController {
             if host {
                 stopHosting()
             } else {
-                stopNetServiceBrowser()
+                netServiceBrowser?.stop()
                 socket?.disconnect()
                 socket = nil
                 netService = nil
@@ -106,7 +106,7 @@ class HostViewController: UIViewController {
             // After 5 seconds, if no service has been found, start one
             DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
                 if !self.connected {
-                    self.stopNetServiceBrowser()
+                    self.netServiceBrowser?.stop()
                     self.startHosting()
                 }
             }
@@ -121,10 +121,6 @@ class HostViewController: UIViewController {
         netServiceBrowser?.searchForServices(ofType: "_LocalNetworkingApp._tcp.", inDomain: "local.")
     }
     
-    func stopNetServiceBrowser() {
-        netServiceBrowser?.stop()
-    }
-
     func connectToNextAddress() {
         var done = false
         while (!done && serverAddresses?.count ?? 0 > 0) {
@@ -144,6 +140,22 @@ class HostViewController: UIViewController {
     }
     
     func startHosting() {
+        // Create the listen socket
+        socket = GCDAsyncSocket(delegate: self, delegateQueue: socketQueue)
+        do {
+            try socket?.accept(onPort: 0)
+        } catch let error {
+            print("ERROR: \(error)")
+            return
+        }
+
+        let port = socket!.localPort
+        
+        // Publish a NetService
+        netService = NetService(domain: "local.", type: "_LocalNetworkingApp._tcp.", name: "Host Device", port: Int32(port))
+        netService?.delegate = self
+        netService?.publish()
+        
         // Host mode on
         host = true
         
@@ -160,19 +172,6 @@ class HostViewController: UIViewController {
         
         // Initialize cannonical thread
         cannonicalThread = [message]
-        
-        // Create the listen socket and publish a net service
-        socket = GCDAsyncSocket(delegate: self, delegateQueue: socketQueue)
-        do {
-            try socket?.accept(onPort: 0)
-            let port = socket!.localPort
-            
-            netService = NetService(domain: "local.", type: "_LocalNetworkingApp._tcp.", name: "Host Device", port: Int32(port))
-            netService?.delegate = self
-            netService?.publish()
-        } catch let error {
-            print("ERROR: \(error)")
-        }
         
         // Enable chat
         textField.isEnabled = true
@@ -293,10 +292,10 @@ class HostViewController: UIViewController {
             cannonicalThread.append(message)
             
             for client in connectedSockets {
-                client.write(messageData, withTimeout: -1, tag: HostViewController.MESSAGE_TAG)
+                client.write(messageData, withTimeout: -1, tag: ViewController.MESSAGE_TAG)
             }
         } else {
-            socket?.write(messageData, withTimeout: -1, tag: HostViewController.MESSAGE_TAG)
+            socket?.write(messageData, withTimeout: -1, tag: ViewController.MESSAGE_TAG)
         }
         
         textField.text = ""
@@ -304,7 +303,7 @@ class HostViewController: UIViewController {
     
 }
 
-extension HostViewController: UITextFieldDelegate {
+extension ViewController: UITextFieldDelegate {
     func textFieldShouldReturn(_ textField: UITextField) -> Bool {
         textField.resignFirstResponder()
         sendButtonTapped(textField)
@@ -312,7 +311,7 @@ extension HostViewController: UITextFieldDelegate {
     }
 }
 
-extension HostViewController: NetServiceBrowserDelegate {
+extension ViewController: NetServiceBrowserDelegate {
     func netServiceBrowser(_ browser: NetServiceBrowser, didNotSearch errorDict: [String : NSNumber]) {
         print("ERROR: \(errorDict)")
     }
@@ -330,7 +329,7 @@ extension HostViewController: NetServiceBrowserDelegate {
     }
 }
 
-extension HostViewController: NetServiceDelegate {
+extension ViewController: NetServiceDelegate {
     
     // Client
     func netService(_ sender: NetService, didNotResolve errorDict: [String : NSNumber]) {
@@ -357,7 +356,7 @@ extension HostViewController: NetServiceDelegate {
     }
 }
 
-extension HostViewController: GCDAsyncSocketDelegate {
+extension ViewController: GCDAsyncSocketDelegate {
     func socket(_ sock: GCDAsyncSocket, didConnectToHost host: String, port: UInt16) {
         print("Socket did connect to host \(host) on port \(port)")
         connected = true
@@ -373,7 +372,7 @@ extension HostViewController: GCDAsyncSocketDelegate {
         }
         
         // Connected to host, wait for a name
-        socket?.readData(to: GCDAsyncSocket.crlfData(), withTimeout: -1, tag: HostViewController.NAME_TAG)
+        socket?.readData(to: GCDAsyncSocket.crlfData(), withTimeout: -1, tag: ViewController.NAME_TAG)
         print("Waiting for name \(socket!)")
     }
     
@@ -390,14 +389,14 @@ extension HostViewController: GCDAsyncSocketDelegate {
             return
         }
         nameData.append(GCDAsyncSocket.crlfData())
-        newSocket.write(nameData, withTimeout: -1, tag: HostViewController.NAME_TAG)
+        newSocket.write(nameData, withTimeout: -1, tag: ViewController.NAME_TAG)
         
         // Send the client the cannonical thread
         for message in cannonicalThread {
             do {
                 var messageData = try message.toJsonData()
                 messageData.append(GCDAsyncSocket.crlfData())
-                newSocket.write(messageData, withTimeout: -1, tag: HostViewController.MESSAGE_TAG)
+                newSocket.write(messageData, withTimeout: -1, tag: ViewController.MESSAGE_TAG)
             } catch let error {
                 print("ERROR: \(error) - Couldn't serialize message \(message)")
             }
@@ -411,7 +410,7 @@ extension HostViewController: GCDAsyncSocketDelegate {
             var messageData = try message.toJsonData()
             messageData.append(GCDAsyncSocket.crlfData())
             for client in connectedSockets {
-                client.write(messageData, withTimeout: -1, tag: HostViewController.MESSAGE_TAG)
+                client.write(messageData, withTimeout: -1, tag: ViewController.MESSAGE_TAG)
             }
         } catch let error {
             print("ERROR: \(error) - Couldn't serialize message \(message)")
@@ -422,14 +421,18 @@ extension HostViewController: GCDAsyncSocketDelegate {
         }
         
         // Wait for a message
-        newSocket.readData(to: GCDAsyncSocket.crlfData(), withTimeout: -1, tag: HostViewController.MESSAGE_TAG)
+        newSocket.readData(to: GCDAsyncSocket.crlfData(), withTimeout: -1, tag: ViewController.MESSAGE_TAG)
     }
     
     func socket(_ sock: GCDAsyncSocket, didRead data: Data, withTag tag: Int) {
         print("Socket did read data with tag \(tag)")
+        
+        if let string = String(data: data, encoding: .utf8) {
+            print(string)
+        }
 
         switch tag {
-        case HostViewController.MESSAGE_TAG:
+        case ViewController.MESSAGE_TAG:
             // Incoming message
             let messageData = data.dropLast(2)
             let message: Message
@@ -454,11 +457,11 @@ extension HostViewController: GCDAsyncSocketDelegate {
                         // Don't send the message back to the client who sent it
                         continue
                     }
-                    client.write(data, withTimeout: -1, tag: HostViewController.MESSAGE_TAG)
+                    client.write(data, withTimeout: -1, tag: ViewController.MESSAGE_TAG)
                 }
             }
             break
-        case HostViewController.NAME_TAG:
+        case ViewController.NAME_TAG:
             // Received name from the server
             guard !host else {
                 print("ERROR: Why is the host getting sent a name?")
@@ -476,7 +479,7 @@ extension HostViewController: GCDAsyncSocketDelegate {
         }
         
         // Read the next message
-        sock.readData(to: GCDAsyncSocket.crlfData(), withTimeout: -1, tag: HostViewController.MESSAGE_TAG)
+        sock.readData(to: GCDAsyncSocket.crlfData(), withTimeout: -1, tag: ViewController.MESSAGE_TAG)
     }
     
     func socketDidDisconnect(_ sock: GCDAsyncSocket, withError err: Error?) {
@@ -498,7 +501,7 @@ extension HostViewController: GCDAsyncSocketDelegate {
                         var messageData = try message.toJsonData()
                         messageData.append(GCDAsyncSocket.crlfData())
                         for client in connectedSockets {
-                            client.write(messageData, withTimeout: -1, tag: HostViewController.MESSAGE_TAG)
+                            client.write(messageData, withTimeout: -1, tag: ViewController.MESSAGE_TAG)
                         }
                     } catch let error {
                         print("ERROR: \(error) - Couldn't serialize message \(message)")
