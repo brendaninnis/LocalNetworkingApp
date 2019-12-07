@@ -19,6 +19,7 @@ class ViewController: UIViewController {
     @IBOutlet weak var sendButton: UIButton!
     @IBOutlet weak var textFieldBottom: NSLayoutConstraint!
     
+    let namesQueue = DispatchQueue(label: "SocketNamesQueue", attributes: .concurrent)
     var names = [
         "Belgarion",
         "Ce'Nedra",
@@ -39,9 +40,13 @@ class ViewController: UIViewController {
     var myName = ""
     var socketNames: [GCDAsyncSocket: String] = [:]
     
+    let messagesArrayQueue = DispatchQueue(label: "CannonicalThreadQueue", attributes: .concurrent)
+    var cannonicalThread: [Message] = []
+    
     var netService: NetService?
     var socket: GCDAsyncSocket?
-    let socketQueue = DispatchQueue.init(label: "HostSocketQueue")
+    let socketQueue = DispatchQueue(label: "HostSocketQueue")
+    let clientArrayQueue = DispatchQueue(label: "ConnectedSocketsQueue", attributes: .concurrent)
     var connectedSockets: [GCDAsyncSocket] = []
     var netServiceBrowser: NetServiceBrowser?
     var serverAddresses: [Data]?
@@ -49,8 +54,6 @@ class ViewController: UIViewController {
     var host = false
     var connected = false
     var joined = false
-    
-    var cannonicalThread: [Message] = []
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -103,7 +106,7 @@ class ViewController: UIViewController {
             // Browse for an existing service
             startNetServiceBrowser()
             
-            // After 5 seconds, if no service has been found, start one
+            // After 3 seconds, if no service has been found, start one
             DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
                 if !self.connected {
                     self.netServiceBrowser?.stop()
@@ -152,7 +155,7 @@ class ViewController: UIViewController {
         let port = socket!.localPort
         
         // Publish a NetService
-        netService = NetService(domain: "local.", type: "_LocalNetworkingApp._tcp.", name: "Host Device", port: Int32(port))
+        netService = NetService(domain: "local.", type: "_LocalNetworkingApp._tcp.", name: "BelgariadChat", port: Int32(port))
         netService?.delegate = self
         netService?.publish()
         
@@ -186,8 +189,10 @@ class ViewController: UIViewController {
         netService = nil
         
         // Remove the clients
-        for socket in connectedSockets {
-            socket.disconnect()
+        clientArrayQueue.async {
+            for socket in self.connectedSockets {
+                socket.disconnect()
+            }
         }
         
         // Remove my name
@@ -289,10 +294,14 @@ class ViewController: UIViewController {
         
         // Send the message over the network
         if host {
-            cannonicalThread.append(message)
+            messagesArrayQueue.async(flags: .barrier) {
+                self.cannonicalThread.append(message)
+            }
             
-            for client in connectedSockets {
-                client.write(messageData, withTimeout: -1, tag: ViewController.MESSAGE_TAG)
+            clientArrayQueue.async {
+                for client in self.connectedSockets {
+                    client.write(messageData, withTimeout: -1, tag: ViewController.MESSAGE_TAG)
+                }
             }
         } else {
             socket?.write(messageData, withTimeout: -1, tag: ViewController.MESSAGE_TAG)
@@ -377,11 +386,16 @@ extension ViewController: GCDAsyncSocketDelegate {
     }
     
     func socket(_ sock: GCDAsyncSocket, didAcceptNewSocket newSocket: GCDAsyncSocket) {
-        connectedSockets.append(newSocket)
+        clientArrayQueue.async(flags: .barrier) {
+            self.connectedSockets.append(newSocket)
+        }
         
         // Give the new client a name
-        let name = getName()
-        socketNames[newSocket] = name
+        var name = "Someone"
+        namesQueue.sync(flags: .barrier) {
+            name = getName()
+            self.socketNames[newSocket] = name
+        }
         
         // Send the client their name
         guard var nameData = name.data(using: .utf8) else {
@@ -392,25 +406,31 @@ extension ViewController: GCDAsyncSocketDelegate {
         newSocket.write(nameData, withTimeout: -1, tag: ViewController.NAME_TAG)
         
         // Send the client the cannonical thread
-        for message in cannonicalThread {
-            do {
-                var messageData = try message.toJsonData()
-                messageData.append(GCDAsyncSocket.crlfData())
-                newSocket.write(messageData, withTimeout: -1, tag: ViewController.MESSAGE_TAG)
-            } catch let error {
-                print("ERROR: \(error) - Couldn't serialize message \(message)")
+        messagesArrayQueue.async {
+            for message in self.cannonicalThread {
+                do {
+                    var messageData = try message.toJsonData()
+                    messageData.append(GCDAsyncSocket.crlfData())
+                    newSocket.write(messageData, withTimeout: -1, tag: ViewController.MESSAGE_TAG)
+                } catch let error {
+                    print("ERROR: \(error) - Couldn't serialize message \(message)")
+                }
             }
         }
         
         // Send a system message alerting that a client has joined
         let message = Message(sender: Message.SERVER_MSG_SENDER, message: "\(name) has joined", timestamp: Date())
-        self.cannonicalThread.append(message)
+        messagesArrayQueue.async(flags: .barrier) {
+            self.cannonicalThread.append(message)
+        }
 
         do {
             var messageData = try message.toJsonData()
             messageData.append(GCDAsyncSocket.crlfData())
-            for client in connectedSockets {
-                client.write(messageData, withTimeout: -1, tag: ViewController.MESSAGE_TAG)
+            clientArrayQueue.async {
+                for client in self.connectedSockets {
+                    client.write(messageData, withTimeout: -1, tag: ViewController.MESSAGE_TAG)
+                }
             }
         } catch let error {
             print("ERROR: \(error) - Couldn't serialize message \(message)")
@@ -449,15 +469,19 @@ extension ViewController: GCDAsyncSocketDelegate {
             
             if host {
                 // Update the cannonical thread
-                cannonicalThread.append(message)
+                messagesArrayQueue.async {
+                    self.cannonicalThread.append(message)
+                }
                 
                 // Forward the message to clients
-                for client in connectedSockets {
-                    if client == sock {
-                        // Don't send the message back to the client who sent it
-                        continue
+                clientArrayQueue.async {
+                    for client in self.connectedSockets {
+                        if client == sock {
+                            // Don't send the message back to the client who sent it
+                            continue
+                        }
+                        client.write(data, withTimeout: -1, tag: ViewController.MESSAGE_TAG)
                     }
-                    client.write(data, withTimeout: -1, tag: ViewController.MESSAGE_TAG)
                 }
             }
             break
@@ -485,33 +509,45 @@ extension ViewController: GCDAsyncSocketDelegate {
     func socketDidDisconnect(_ sock: GCDAsyncSocket, withError err: Error?) {
         print("Socket did disconnect \(err?.localizedDescription ?? "")")
         if host {
-            if let index = connectedSockets.firstIndex(of: sock) {
-                connectedSockets.remove(at: index)
-                
-                // Remove the name
-                if let name = socketNames[sock] {
-                    putName(name)
-                    socketNames[sock] = nil
-
-                    // Send a system message alerting that a client has left
-                    let message = Message(sender: Message.SERVER_MSG_SENDER, message: "\(name) has left", timestamp: Date())
-                    self.cannonicalThread.append(message)
-
-                    do {
-                        var messageData = try message.toJsonData()
-                        messageData.append(GCDAsyncSocket.crlfData())
-                        for client in connectedSockets {
-                            client.write(messageData, withTimeout: -1, tag: ViewController.MESSAGE_TAG)
-                        }
-                    } catch let error {
-                        print("ERROR: \(error) - Couldn't serialize message \(message)")
-                    }
-                    
-                    DispatchQueue.main.async {
-                        self.addMessage(message, toTextView: self.textView)
-                    }
+            clientArrayQueue.async(flags: .barrier) {
+                if let index = self.connectedSockets.firstIndex(of: sock) {
+                    self.connectedSockets.remove(at: index)
                 }
             }
+            
+            // Remove the name
+            var name = "Someone"
+            namesQueue.sync(flags: .barrier) {
+                guard let innerName = socketNames[sock] else {
+                    return
+                }
+                name = innerName
+                putName(name)
+                socketNames[sock] = nil
+            }
+
+            let message = Message(sender: Message.SERVER_MSG_SENDER, message: "\(name) has left", timestamp: Date())
+            // Send a system message alerting that a client has left
+            messagesArrayQueue.async(flags: .barrier) {
+                self.cannonicalThread.append(message)
+            }
+
+            do {
+                var messageData = try message.toJsonData()
+                messageData.append(GCDAsyncSocket.crlfData())
+                clientArrayQueue.async {
+                    for client in self.connectedSockets {
+                        client.write(messageData, withTimeout: -1, tag: ViewController.MESSAGE_TAG)
+                    }
+                }
+            } catch let error {
+                print("ERROR: \(error) - Couldn't serialize message \(message)")
+            }
+            
+            DispatchQueue.main.async {
+                self.addMessage(message, toTextView: self.textView)
+            }
+            
         } else {
             // Reset
             connected = false
