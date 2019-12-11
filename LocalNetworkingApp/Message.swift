@@ -10,10 +10,14 @@ import Foundation
 
 struct Message {
     
+    // Json keys
+    static let SENDER_KEY = "sender"
+    static let MESSAGE_KEY = "message"
+    static let TIMESTAMP_KEY = "timestamp"
+    
+    // Sender values
     static let SERVER_MSG_SENDER = "SERVER_MSG_SENDER"
-    static let SENDER_KEY = "SENDER_KEY"
-    static let MESSAGE_KEY = "MESSAGE_KEY"
-    static let TIMESTAMP_KEY = "TIMESTAMP_KEY"
+    static let SERVER_NAME_SENDER = "SERVER_NAME_SENDER"
     
     let sender: String
     let message: String
@@ -33,7 +37,7 @@ struct Message {
             sender = dict[Message.SENDER_KEY] as? String ?? ""
             message = dict[Message.MESSAGE_KEY] as? String ?? ""
             if let interval = dict[Message.TIMESTAMP_KEY] as? TimeInterval {
-                timestamp = Date(timeIntervalSince1970: interval)
+                timestamp = Date(timeIntervalSince1970: interval / 1000)
             }
         }
         self.sender = sender
@@ -55,7 +59,7 @@ struct Message {
         var dict = Dictionary<String, Any>()
         dict[Message.SENDER_KEY] = self.sender
         dict[Message.MESSAGE_KEY] = self.message
-        dict[Message.TIMESTAMP_KEY] = self.timestamp.timeIntervalSince1970
+        dict[Message.TIMESTAMP_KEY] = (Int) (self.timestamp.timeIntervalSince1970 * 1000)
         return dict
     }
     
