@@ -51,6 +51,7 @@ class ViewController: UIViewController {
     var host = false
     var connected = false
     var joined = false
+    var hostAfterTask: DispatchWorkItem?
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -80,6 +81,7 @@ class ViewController: UIViewController {
             } else {
                 netServiceBrowser?.stop()
                 socket?.disconnect()
+                hostAfterTask?.cancel()
                 socket = nil
                 netService = nil
                 serverAddresses = nil
@@ -104,12 +106,11 @@ class ViewController: UIViewController {
             startNetServiceBrowser()
             
             // After 3 seconds, if no service has been found, start one
-            DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
-                if !self.connected {
-                    self.netServiceBrowser?.stop()
-                    self.startHosting()
-                }
+            hostAfterTask = DispatchWorkItem {
+                self.netServiceBrowser?.stop()
+                self.startHosting()
             }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 3, execute: hostAfterTask!)
         }
         
         joined = !joined
@@ -326,6 +327,7 @@ extension ViewController: NetServiceBrowserDelegate {
     }
     
     func netServiceBrowser(_ browser: NetServiceBrowser, didFind service: NetService, moreComing: Bool) {
+        hostAfterTask?.cancel()
         if netService == nil {
             netService = service
             netService?.delegate = self
